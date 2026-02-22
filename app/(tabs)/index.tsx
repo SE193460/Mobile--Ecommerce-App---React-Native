@@ -17,18 +17,43 @@ export default function Home() {
   const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("https://fakestoreapi.com/products");
+      if (!response.ok) throw new Error("Failed to fetch products");
+      const data: Product[] = await response.json();
+      setProducts(data);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong while fetching products.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetch("https://fakestoreapi.com/products")
-      .then(res => res.json())
-      .then((data: Product[]) => setProducts(data))
-      .finally(() => setLoading(false));
+    fetchProducts();
   }, []);
 
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#2196F3" />
+        <Text style={styles.loadingText}>Loading products...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Pressable style={styles.retryButton} onPress={fetchProducts}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
       </View>
     );
   }
@@ -95,5 +120,28 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 12,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#666",
+    fontSize: 16,
+  },
+  errorText: {
+    color: "#D32F2F",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  retryButton: {
+    backgroundColor: "#2196F3",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
